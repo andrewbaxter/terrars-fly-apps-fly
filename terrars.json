@@ -1,0 +1,6 @@
+{
+    "provider": "fly-apps/fly",
+    "version": "0.0.20",
+    "dest": "src/fly",
+	"feature_gate": "Cargo.toml"
+}
