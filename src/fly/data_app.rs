@@ -6,6 +6,8 @@ use super::provider::ProviderFly;
 
 #[derive(Serialize)]
 struct DataAppData {
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    depends_on: Vec<String>,
     #[serde(skip_serializing_if = "SerdeSkipDefault::is_default")]
     provider: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -25,6 +27,11 @@ pub struct DataApp(Rc<DataApp_>);
 impl DataApp {
     fn shared(&self) -> &StackShared {
         &self.0.shared
+    }
+
+    pub fn depends_on(self, dep: &impl Dependable) -> Self {
+        self.0.data.borrow_mut().depends_on.push(dep.extract_ref());
+        self
     }
 
     pub fn set_provider(&self, provider: &ProviderFly) -> &Self {
@@ -84,6 +91,12 @@ impl Datasource for DataApp {
     }
 }
 
+impl Dependable for DataApp {
+    fn extract_ref(&self) -> String {
+        Datasource::extract_ref(self)
+    }
+}
+
 impl ToListMappable for DataApp {
     type O = ListRef<DataAppRef>;
 
@@ -119,6 +132,7 @@ impl BuildDataApp {
             shared: stack.shared.clone(),
             tf_id: self.tf_id,
             data: RefCell::new(DataAppData {
+                depends_on: core::default::Default::default(),
                 provider: None,
                 for_each: None,
                 name: self.name,
